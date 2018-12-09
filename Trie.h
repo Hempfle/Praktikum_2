@@ -11,7 +11,7 @@
 
 #endif //PRAKTIKUM_2_TRIE_H
 
-//TODO postorder implementieren
+//TODO postorder implementieren, //Folien steht Stack als Pfad verwenden, nur für die Anzeige notwendig?
 
 template <class T, class E=char>
 class Trie {
@@ -27,6 +27,11 @@ public:
 
     class innerNode : AbstractNode<T> {
 //jeder knoten hat eine map, bsp. e zeigt auf pointer
+
+
+    };
+
+    class leafNode : AbstractNode<T> {
 
     };
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

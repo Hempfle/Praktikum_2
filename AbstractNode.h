@@ -12,10 +12,14 @@ template <class T>
 class AbstractNode {
 public:
 
+    T value;
+
     std::map<char, T*> nextNode;
 
-     T getNextNode(char key) {
-        return nextNode.at(key);
+    AbstractNode(T value) : nextNode(), value(value) {}
+
+    T getNextNode(char key) {
+        return nextNode.find(key);
     }
 
     void setNextNode(char key, T* next) {
