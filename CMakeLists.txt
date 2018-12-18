@@ -3,4 +3,4 @@ project(Praktikum_2)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Praktikum_2 main.cpp Trie.h AbstractNode.h)
+add_executable(Praktikum_2 Trie.h AbstractNode.h testHit.cpp testHit.h)

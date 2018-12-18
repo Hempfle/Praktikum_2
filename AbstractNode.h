@@ -14,16 +14,16 @@ public:
 
     T value;
 
-    std::map<char, T*> nextNode;
+    std::map<char, T*> nextNodes;
 
-    AbstractNode(T value) : nextNode(), value(value) {}
+    AbstractNode(T value) : nextNodes(), value(value) {}
 
     T getNextNode(char key) {
-        return nextNode.find(key);
+        return nextNodes.find(key);
     }
 
     void setNextNode(char key, T* next) {
-        nextNode[key] = next;
+        nextNodes[key] = next;
      }
 
 };
