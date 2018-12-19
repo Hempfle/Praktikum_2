@@ -62,7 +62,7 @@ public:
     public:
         typedef AbstractNode<T> node;
         typedef postorderTreeTraversal iterator;
-        typedef std::stack<T> stack;
+        typedef std::stack<std::map<E, node>::iterator> stack;
 
         node* root;
         stack current;
