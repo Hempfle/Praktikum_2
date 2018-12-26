@@ -13,9 +13,9 @@ class AbstractNode {
 public:
 
     T value;
-
     std::map<char, T*> nextNodes;
 
+    AbstractNode() = default;
     AbstractNode(T value) : nextNodes(), value(value) {}
 
     T getNextNode(char key) {
