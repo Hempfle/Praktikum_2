@@ -8,22 +8,26 @@
 
 #endif //PRAKTIKUM_2_ABSTRACTNODE_H
 
-template <class T>
+template<class T, class E=char>
 class AbstractNode {
 public:
 
     T value;
-    std::map<char, T*> nextNodes;
+
+    std::map<E, T *> nextNodes;
 
     AbstractNode() = default;
-    AbstractNode(T value) : nextNodes(), value(value) {}
 
-    T getNextNode(char key) {
-        return nextNodes.find(key);
+    AbstractNode(T value) : value(value), nextNodes() {}
+
+    T getValue() { return value; }
+
+    std::map<char, T *> getAllNextNodes() {
+        return nextNodes;
     }
 
-    void setNextNode(char key, T* next) {
+    virtual void setNewChild(E key, T *next) {
         nextNodes[key] = next;
-     }
+    }
 
 };
