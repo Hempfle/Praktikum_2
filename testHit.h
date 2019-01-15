@@ -16,7 +16,7 @@ class testHit {
 
 };
 
-int main() {
+int mains() {
 std::map<int, int> testmap;
 testmap[2] = 3;
 testmap[5] = 4;

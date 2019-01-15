@@ -11,10 +11,9 @@
 template<class T, class E=char>
 class AbstractNode {
 public:
-
     T value;
 
-    std::map<E, T *> nextNodes;
+    std::map<E, AbstractNode *> nextNodes;
 
     AbstractNode() = default;
 
@@ -22,11 +21,11 @@ public:
 
     T getValue() { return value; }
 
-    std::map<char, T *> getAllNextNodes() {
+    std::map<E, T *> getAllNextNodes() {
         return nextNodes;
     }
 
-    virtual void setNewChild(E key, T *next) {
+    virtual void setNewChild(E key, AbstractNode *next) {
         nextNodes[key] = next;
     }
 

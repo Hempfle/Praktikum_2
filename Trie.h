@@ -12,8 +12,6 @@
 
 #endif //PRAKTIKUM_2_TRIE_H
 
-//TODO postorder implementieren, //Folien steht Stack als Pfad verwenden, nur für die Anzeige notwendig?
-
 class innerNode;
 
 class leafNode;
@@ -25,55 +23,48 @@ class Trie {
 public:
 
     typedef std::basic_string<E> key_type; // string=basic_string<char>
-    typedef std::map<const key_type, T> value_type;
+    typedef std::pair<const key_type, T> value_type;
     typedef T mapped_type;
 
-    //------------------------  Node classes -------------------------------------------------------------------------------------------------
-    class innerNode : AbstractNode<T> {
+    //------------------------  Node classes -----------------------------------------------------
+    //--------------------------------------------------------------------------------------------
+    class InnerNode : public AbstractNode<T, E> {
     public:
-        innerNode() : AbstractNode<innerNode, E>() {};
+        InnerNode() : AbstractNode<T, E>() {};
+    };
 
-        explicit innerNode(leafNode *firstChild, E key) : AbstractNode<innerNode, E>() {
-            setNewChild(key, firstChild);
-        };
+    class LeafNode : public AbstractNode<T, E> {
+    public:
+        LeafNode() = default;
 
-        explicit innerNode(innerNode *firstChild, E key) : AbstractNode<innerNode, E>() {
-            setNewChild(key, firstChild);
-        };
+        LeafNode(mapped_type valueLeaf) : AbstractNode<mapped_type, E>(valueLeaf) {};
+
+        virtual void setNewChild(E key, AbstractNode<T, E> *next) {} //Leaf Nodes never get childs.
 
     };
 
-    class leafNode : AbstractNode<T> {
-    public:
-        key_type pathToValue;
+    //--------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------
 
-        leafNode() = default;
+    //~~~~~~~~~~~~~~~~~~  Iterator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        leafNode(mapped_type valueLeaf, key_type pathToValue) : AbstractNode<key_type, E>(valueLeaf),
-                                                                pathToValue(pathToValue) {};
-
-        virtual void setNewChild(E key, T *next) {} //Leaf Nodes never get childs.
-
-    };
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-    //~~~~~~~~~~~~~~~~~~  Iterator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    class postorderTreeTraversal {
+    class PostorderTreeTraversal {
     public:
         typedef AbstractNode<T> node;
-        typedef postorderTreeTraversal iterator;
-        typedef typename std::map<E, node>::iterator mapIterator;
+        typedef PostorderTreeTraversal iterator;
+        typedef typename std::map<E, node*>::iterator mapIterator;
 
         typedef std::stack<std::pair<mapIterator, mapIterator>> stack;
 
-        node *root;
+        InnerNode *root;
         stack current;
 
-        postorderTreeTraversal(node *root) : root(root), current() {
+        explicit PostorderTreeTraversal(InnerNode *root) : root(root) {};
+
+        void initializeStack() {
             current.push(std::make_pair(root->nextNodes.begin(), root->nextNodes.end()));
-        };
+        }
 
         iterator &operator=(const iterator &itr) {
             root = itr.root;
@@ -87,11 +78,11 @@ public:
 
         bool operator!=(const iterator &itr) { return !operator==(itr); }
 
-        T &operator*() { //todo: if-Abfrage nötig?
+        T &operator*() {
             std::pair<mapIterator, mapIterator> tmp = current.top();
 
             if (tmp.first != tmp.second) {
-                return *tmp.first;
+                return tmp.first.operator*().second.getValue();
             }
         }
 
@@ -126,27 +117,30 @@ public:
 
         void slideLeft() {
             std::pair<mapIterator, mapIterator> currentPair = current.top();
+            mapIterator firstElement = currentPair.first;
 
-            while (currentPair.first != currentPair.second) {
-                node currentElement = *currentPair.first;
+            while (firstElement.operator*().first != Trie::TERMINAL_ZEICHEN) {
+                node currentElement = firstElement.operator*().second;
                 current.push(std::make_pair(currentElement.getAllNextNodes().begin(),
                                             currentElement.getAllNextNodes().end()));
 
                 currentPair = current.top();
+                firstElement = currentPair.first;
             }
         }
-
     };
-
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    typedef postorderTreeTraversal iterator;
+    typedef PostorderTreeTraversal iterator;
 
-    const char TERMINAL_ZEICHEN = '\0';
+    const static char TERMINAL_ZEICHEN = '\0';
 
-    innerNode *startRoot;
+    InnerNode startRoot;
 
-    Trie() = default;
+    Trie() {
+        startRoot = InnerNode();
+    };
 
     bool empty() const;
 
@@ -169,87 +163,144 @@ bool Trie<T, E>::empty() const {
     return startRoot->getAllNextNodes().empty();
 }
 
-template<class T, class E>
+/** Erases the key-path from the trie. If the key is not present, then nothing will happen.
+ * @param value Key to erase from the trie.
+ */
+template<class T, class E> //todo: fertig machen
 void Trie<T, E>::erase(const Trie::key_type &value) {
+    PostorderTreeTraversal isValueThere = Trie<T, E>::find(value);
+    if (isValueThere != Trie<T, E>::end()) {
+
+
+
+    } else {
+        return;
+    }
 
 }
 
-template<class T, class E>
+
+template<class T, class E> //todo: wahrscheinlich falsch?...
 void Trie<T, E>::clear() {
     startRoot->getAllNextNodes().clear();
 }
 
 /**
- * Inserts the element into the trie. Gives back the iterator pointing to the inserted element.
- * @tparam T
- * @tparam E
+ * Inserts the element of the map into the trie. Gives back the iterator pointing to the inserted element.
  * @param value The value to insert.
  * @return iterator pointing to the inserted element.
  */
 template<class T, class E>
-postorderTreeTraversal Trie<T, E>::insert(const Trie::value_type &value) {
-    return Trie::iterator(nullptr);
+typename Trie<T, E>::iterator Trie<T, E>::insert(const Trie::value_type &value) {
+    key_type tmpKeyForInsert = value.first;
+    PostorderTreeTraversal elementIterator = Trie::begin();
+
+    InnerNode *currentNode = &startRoot;
+    typename std::map<E, T *>::iterator nodeCharacterIt;
+    int counterFoundKeyChar = 0;
+
+    for (int i = 0; i < tmpKeyForInsert.size(); ++i) {
+
+        nodeCharacterIt = currentNode->getAllNextNodes().find(tmpKeyForInsert.at(i));
+        if (nodeCharacterIt == currentNode->getAllNextNodes().end()) {
+            InnerNode nextChild = InnerNode();
+            currentNode->setNewChild(tmpKeyForInsert.at(i), &nextChild);
+
+            elementIterator.current.push(std::make_pair(currentNode->getAllNextNodes().find(tmpKeyForInsert.at(i)),
+                                                        currentNode->getAllNextNodes().end()));
+
+            currentNode = &nextChild;
+        } else {
+            elementIterator.current.push(std::make_pair(nodeCharacterIt, currentNode->getAllNextNodes().end()));
+
+            currentNode = nodeCharacterIt.operator*().second;
+            ++counterFoundKeyChar;
+        }
+    }
+    //element already in trie
+    if (counterFoundKeyChar == tmpKeyForInsert.size()) {
+        elementIterator.current.push(std::make_pair(currentNode->getAllNextNodes().find(Trie::TERMINAL_ZEICHEN),
+                                                    currentNode->getAllNextNodes().end()));
+        return elementIterator;
+    }
+
+    LeafNode newLeaf = LeafNode(value.second);
+    currentNode->setNewChild(Trie::TERMINAL_ZEICHEN, &newLeaf);
 }
 
 /**
  *
- * @tparam T
- * @tparam E
- * @param testElement
+ * @param testElement the Element to adjust the search for.
  * @return
  */
-template<class T, class E>
-postorderTreeTraversal Trie<T, E>::lower_bound(const Trie::key_type &testElement) {
-    return Trie::iterator(nullptr);
+template<class T, class E> //todo: fertig machen
+typename Trie<T, E>::iterator Trie<T, E>::lower_bound(const Trie::key_type &testElement) {
+
+
 }
 
 /**
  *
- * @tparam T
- * @tparam E
- * @param testElement
+ * @param testElement the Element to adjust the search for.
  * @return
  */
-template<class T, class E>
-postorderTreeTraversal Trie<T, E>::upper_bound(const Trie::key_type &testElement) {
-    return Trie::iterator(nullptr);
+template<class T, class E> //todo fertig machen
+typename Trie<T, E>::iterator Trie<T, E>::upper_bound(const Trie::key_type &testElement) {
+
+
 }
 
 /**
- * searches the trie for an element. Gives back the iterator pointing to the searched element, or the end-it ot trie
- * @tparam T
- * @tparam E
+ * searches the trie for an element. Gives back the iterator pointing to the searched element, or the end-it of trie
  * @param testElement The element to find.
  * @return Iterator pointing to the searched element, or the end-iterator of the trie.
  */
 template<class T, class E>
-postorderTreeTraversal Trie<T, E>::find(const Trie::key_type &testElement) {
-    return Trie::iterator(nullptr);
+typename Trie<T, E>::iterator Trie<T, E>::find(const Trie::key_type &testElement) {
+    PostorderTreeTraversal elementIterator = PostorderTreeTraversal(startRoot);
+    InnerNode *currentNode = &startRoot;
+    typename std::map<E, T *>::iterator nodeCharacterIt;
+    int testElementSize = testElement.size();
+
+    for (int i = 0; i <= testElementSize; ++i) {
+        if (i >= testElementSize) {
+            nodeCharacterIt = currentNode->getAllNextNodes().find(Trie::TERMINAL_ZEICHEN);
+            elementIterator.current.push(std::make_pair(nodeCharacterIt, currentNode->getAllNextNodes().end()));
+        } else {
+            nodeCharacterIt = currentNode->getAllNextNodes().find(testElement.at(i));
+            if (nodeCharacterIt != currentNode->getAllNextNodes().end()) {
+                elementIterator.current.push(std::make_pair(nodeCharacterIt, currentNode->getAllNextNodes().end()));
+                currentNode = nodeCharacterIt.operator*().second;
+            } else {
+                return Trie<T, E>::end();
+            }
+        }
+    }
+    return elementIterator;
+
 }
 
 /**
- * Get an iterator that is pointing to the first child of the root.
- * @tparam T
- * @tparam E
- * @return begin-iterator.
+ * Get an iterator that is pointing to the first leaf of the root.
+ * @return begin-iterator, the first leaf.
  */
-template<class T, class E> //todo same as end.
-postorderTreeTraversal Trie<T, E>::begin() {
-    postorderTreeTraversal it = postorderTreeTraversal(*startRoot);
+template<class T, class E>
+typename Trie<T, E>::iterator Trie<T, E>::begin() {
+    PostorderTreeTraversal it = PostorderTreeTraversal(startRoot);
+    it.initializeStack();
     ++it;
     return it;
 }
 
 /**
  * Get an iterator that is pointing to the end-it of the root.
- * @tparam T
- * @tparam E
+ * End iterator means the stack is empty.
  * @return end-iterator.
  */
-template<class T, class E> //todo: end iterator darf auch normaler iterator sein?
-postorderTreeTraversal Trie<T, E>::end() {
-    postorderTreeTraversal it = postorderTreeTraversal(*startRoot);
-    //return startRoot->getAllNextNodes().end();
-
-
+template<class T, class E>
+typename Trie<T, E>::iterator Trie<T, E>::end() {
+    PostorderTreeTraversal it = PostorderTreeTraversal(startRoot);
+    return it;
 }
+
+
