@@ -1,5 +1,5 @@
 //
-// Created by Mel on 13.01.2019.
+//  Team: Melanie Famao, Christopher Weber
 //
 
 #include <map>
@@ -360,14 +360,14 @@ typename Trie2<T, E>::iterator Trie2<T, E>::upper_bound(const Trie2::key_type &t
                 tmpItr.current.push(newPair);
                 wasNoGreaterCharFound = false;
                 break;
-                //Character from Node is greater than Char in testElement. Word found.
+                //Character from Node is greater than Char in testElement. Greater Word found.
             } else if (characterFromNode > testElement.at(depth)) {
                 std::pair<mapIterator, mapIterator> newPair = std::make_pair(nodeItr, currentNode->nextChilds.end());
                 tmpItr.current.push(newPair);
                 wasNoGreaterCharFound = false;
                 isFinished = true;
                 break;
-            } else {
+            } else { //character from Node is less than Char in testElement.
                 wasNoGreaterCharFound = true;
             }
             ++nodeItr;
@@ -376,14 +376,16 @@ typename Trie2<T, E>::iterator Trie2<T, E>::upper_bound(const Trie2::key_type &t
         if (isFinished) {
             break;
         } else if (wasNoGreaterCharFound) {
-            if (tmpItr.current.empty()) {
+            if (tmpItr.current.empty()) { //just to make sure.
                 return Trie2<T, E>::end();
             }
             mapIterator rememberNodeItr = tmpItr.current.top().first;
-            mapIterator rememberNodeItrEnd = tmpItr.current.top().second; //einfügen solange pop bis eine reihe existiert.
+            mapIterator rememberNodeItrEnd = tmpItr.current.top().second;
             tmpItr.current.pop();
             wasNoGreaterCharFound = false;
 
+            //the saved node/child was already checked -> we need to check the char from the neighboring child.
+            //when no neighbor is found, we save the status of the previous row and check again. until neighbor found or stack empty.
             while (++rememberNodeItr == rememberNodeItrEnd) {
                 if (tmpItr.current.empty()) {
                     break;
@@ -395,6 +397,7 @@ typename Trie2<T, E>::iterator Trie2<T, E>::upper_bound(const Trie2::key_type &t
             }
 
             if (tmpItr.current.empty()){
+                //Check if we had unvisited childs in the root of trie.
                 if (rememberNodeItr != rememberNodeItrEnd) {
                     currentNode = startRoot;
                 } else {
@@ -480,6 +483,15 @@ void Trie2<T, E>::erase(const Trie2::key_type &value) {
             }
         }
     }
+}
+
+template<class T, class E>
+void Trie2<T, E>::printTree() {
+    typedef typename std::map<E, AbstractNode2<T, E> *>::iterator mapIterator;
+    int depth = 0;
+    std::stack<mapIterator, mapIterator>
+
+
 }
 
 

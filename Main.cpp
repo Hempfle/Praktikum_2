@@ -104,6 +104,25 @@ bool testIncrementInterator() {
     return allPassed;
 }
 
+bool testErase() {
+    bool allPassed = true;
+
+    Trie2<std::string, char> testTrie = Trie2<std::string, char>();
+    testTrie.insert(std::make_pair("anker", "anker"));
+    testTrie.insert(std::make_pair("ball", "ball"));
+    testTrie.insert(std::make_pair("bube", "boy"));
+
+    Trie2<std::string, char> testTrie1 = Trie2<std::string, char>();
+    testTrie1.insert(std::make_pair("anker", "anker"));
+    testTrie1.insert(std::make_pair("ball", "ball"));
+    testTrie1.insert(std::make_pair("bube", "boy"));
+
+    Trie2<std::string, char> testTrie2 = Trie2<std::string, char>();
+    testTrie2.insert(std::make_pair("anker", "anker"));
+    testTrie2.insert(std::make_pair("ball", "ball"));
+    testTrie2.insert(std::make_pair("bube", "boy"));
+}
+
 //------------ start here ----------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------
 
