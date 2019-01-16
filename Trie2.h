@@ -343,7 +343,7 @@ typename Trie2<T, E>::iterator Trie2<T, E>::upper_bound(const Trie2::key_type &t
         ++elementItr;
         return elementItr;
     }
-    //3. Fall: rest
+    //3. Fall: testElement is not in Trie
     InnerNode2 *currentNode = startRoot;
     E characterFromNode;
     mapIterator nodeItr = currentNode->nextChilds.begin();
@@ -395,8 +395,8 @@ typename Trie2<T, E>::iterator Trie2<T, E>::upper_bound(const Trie2::key_type &t
                 tmpItr.current.pop();
                 --depth;
             }
-
-            if (tmpItr.current.empty()){
+            //check status of stack and nodes again, because it is unclear which condition in while-loop was met.
+            if (tmpItr.current.empty()) {
                 //Check if we had unvisited childs in the root of trie.
                 if (rememberNodeItr != rememberNodeItrEnd) {
                     currentNode = startRoot;
@@ -421,6 +421,13 @@ typename Trie2<T, E>::iterator Trie2<T, E>::upper_bound(const Trie2::key_type &t
     return elementItr;
 }
 
+/** If the end Iterator is the output, then there was no key in the trie, that was greater then or equal testElement.
+ * Else gives an iterator to the next greater/equal leaf.
+ * Uses find to check, if there is an equal element in the trie.
+ * if none found, upper_bound searches for an greater element than testElement.
+ * @return terator with the path to the next leaf, whose key is greater than or equal testElement.
+ */
+// first element >= testElement
 template<class T, class E>
 typename Trie2<T, E>::iterator Trie2<T, E>::lower_bound(const Trie2::key_type &testElement) {
     PostorderTreeTraversal2 elementItr = find(testElement);
@@ -463,16 +470,18 @@ void Trie2<T, E>::erase(const Trie2::key_type &value) {
             if (canDelete) {
                 if (indexToDelete >= value.size()) {
                     //leaf needs to be deleted
-
-                    Trie2<T, E>::LeafNode2 toDelete = currentNode;//next child node first erase map then node
-                    currentNode->nextChilds.erase(TERMINAL_ZEICHEN);
+                    AbstractNode2<T, E> *toDelete = currentNode;//next child node first erase map then node
+                    currentNode->nextChilds.erase(TERMINAL_ZEICHEN);;
+                    delete ((*toDelete));
                     --indexToDelete;
                     deleteIterator.current.pop();
                     //currPair = deleteIterator.current.top();
                     //currentNode = (InnerNode2 *) currPair.first.operator*().second;
                 } else if (indexToDelete >= 0) {
                     //rest needs to be deleted
+                    AbstractNode2<T, E> *toDelete = currentNode;
                     currentNode->nextChilds.erase(value.at(indexToDelete));
+                    delete ((*toDelete));
                     --indexToDelete;
                     deleteIterator.current.pop();
                 }
@@ -489,7 +498,13 @@ template<class T, class E>
 void Trie2<T, E>::printTree() {
     typedef typename std::map<E, AbstractNode2<T, E> *>::iterator mapIterator;
     int depth = 0;
-    std::stack<mapIterator, mapIterator>
+    std::pair<mapIterator, mapIterator> newPair;
+    std::stack<std::pair<mapIterator, mapIterator>> whereAmI;
+    newPair = std::make_pair(startRoot->nextChilds.begin(), startRoot->nextChilds.end());
+    whereAmI.push(newPair);
+
+    mapIterator mapItr = whereAmI.top().first;
+    AbstractNode2<T, E> *currentNode = mapItr.operator*().second;
 
 
 }
