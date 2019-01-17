@@ -143,6 +143,22 @@ bool testErase() {
     return allPassed;
 }
 
+bool testLowerBound() {
+    Trie2<std::string, char> testTrie = Trie2<std::string, char>();
+    testTrie.insert(std::make_pair("anker", "anker"));
+    testTrie.insert(std::make_pair("ball", "ball"));
+    testTrie.insert(std::make_pair("bube", "bube"));
+    testTrie.insert(std::make_pair("bursche", "boy"));
+    testTrie.insert(std::make_pair("suppe", "soup"));
+
+    Trie2<std::string, char>::PostorderTreeTraversal2 testIt01 = testTrie.lower_bound("bube");
+    Trie2<std::string, char>::PostorderTreeTraversal2 testIt02 = testTrie.lower_bound("zebra");
+    Trie2<std::string, char>::PostorderTreeTraversal2 testIt03 = testTrie.lower_bound("samen");
+    Trie2<std::string, char>::PostorderTreeTraversal2 testIt04 = testTrie.lower_bound("bude");
+
+    return (*testIt01) == "bube" && (testIt02) == testTrie.end() && (*testIt03) == "soup" && (*testIt04) == "boy";
+}
+
 //------------ start here ----------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------
 using namespace std;
@@ -231,6 +247,11 @@ int main() {
         std::cout << "Test testErase() passed\n";
     } else {
         std::cout << "Test testErase() failed.\n";
+    }
+    if (testLowerBound()) {
+        std::cout << "Test testLowerBound() passed\n";
+    } else {
+        std::cout << "Test testLowerBound0() failed.\n";
     }
 
 
