@@ -39,8 +39,9 @@ public:
 
         InnerNode2() = default;
 
-        InnerNode2(bool isLeaf) : nextChilds(), AbstractNode2<T, E>(isLeaf) {
-        };
+        InnerNode2(bool isLeaf) : nextChilds(), AbstractNode2<T, E>(isLeaf) {};
+
+        virtual ~InnerNode2() = default;
 
         /*   Methode ist Ursache der Segmentation-Fault -> deswegen nicht benutzt, bzw auskommentiert.
         map getAllNextChilds() {
@@ -114,6 +115,31 @@ public:
             }
         }
 
+        void helpPrint(int depth) {
+            typename map::iterator nextChildsItr;
+            nextChildsItr = nextChilds.begin();
+            E key;
+
+            while (nextChildsItr != nextChilds.end()) {
+                std::cout << std::endl;
+                for (int i = 0; i <= depth; ++i) {
+                    std::cout << " ";
+                }
+
+                key = nextChildsItr.operator*().first;
+                std::cout << key << " ";
+
+                AbstractNode2<T, E> *currentNodeAbtr = nextChildsItr.operator*().second;
+                if (currentNodeAbtr->isLeaf) {
+                    std::cout << ":" << ((LeafNode2 *) currentNodeAbtr)->value;
+                } else {
+                    InnerNode2 *currentInnerNode = (InnerNode2 *) currentNodeAbtr;
+                    (*currentInnerNode).helpPrint((depth + 1));
+                }
+                ++nextChildsItr;
+            }
+
+        }
 
     };
 
@@ -124,6 +150,8 @@ public:
         LeafNode2() = default;
 
         LeafNode2(T leafValue, bool isLeaf) : value(leafValue), AbstractNode2<T, E>(isLeaf) {};
+
+        virtual ~LeafNode2() = default;
 
         T getValue() {
             return value;
@@ -185,9 +213,11 @@ public:
         bool operator!=(const iterator &itr) { return !operator==(itr); }
 
         T operator*() {
-            std::pair<mapIterator, mapIterator> tmp = current.top();
-            LeafNode2 *node = (LeafNode2 *) tmp.first.operator*().second;
-            return node->getValue();
+            if (!current.empty()) {
+                std::pair<mapIterator, mapIterator> tmp = current.top();
+                LeafNode2 *node = (LeafNode2 *) tmp.first.operator*().second;
+                return node->getValue();
+            }
         }
 
         iterator &operator++() { // prefix
@@ -450,6 +480,7 @@ bool Trie2<T, E>::empty() const {
 
 /**
  * erases the value, if it's in the trie.
+ * First gets the stack with find. Then the nodes and map listings get deleted/erased, from top to bottom.
  * @param value value to erase
  */
 template<class T, class E>
@@ -470,18 +501,16 @@ void Trie2<T, E>::erase(const Trie2::key_type &value) {
             if (canDelete) {
                 if (indexToDelete >= value.size()) {
                     //leaf needs to be deleted
-                    AbstractNode2<T, E> *toDelete = currentNode;//next child node first erase map then node
+                    AbstractNode2<T, E> *toDelete = currentNode->nextChilds.at(TERMINAL_ZEICHEN);
+                    delete toDelete;
                     currentNode->nextChilds.erase(TERMINAL_ZEICHEN);;
-                    delete ((*toDelete));
                     --indexToDelete;
                     deleteIterator.current.pop();
-                    //currPair = deleteIterator.current.top();
-                    //currentNode = (InnerNode2 *) currPair.first.operator*().second;
                 } else if (indexToDelete >= 0) {
                     //rest needs to be deleted
-                    AbstractNode2<T, E> *toDelete = currentNode;
+                    AbstractNode2<T, E> *toDelete = currentNode->nextChilds.at(value.at(indexToDelete));
+                    delete toDelete;
                     currentNode->nextChilds.erase(value.at(indexToDelete));
-                    delete ((*toDelete));
                     --indexToDelete;
                     deleteIterator.current.pop();
                 }
@@ -491,22 +520,21 @@ void Trie2<T, E>::erase(const Trie2::key_type &value) {
                 break;
             }
         }
+        //root is left
+        if (canDelete) {
+            AbstractNode2<T, E> *toDelete = startRoot->nextChilds.at(value.at(indexToDelete));
+            delete toDelete;
+            startRoot->nextChilds.erase(value.at(indexToDelete));
+        }
     }
 }
 
 template<class T, class E>
 void Trie2<T, E>::printTree() {
-    typedef typename std::map<E, AbstractNode2<T, E> *>::iterator mapIterator;
-    int depth = 0;
-    std::pair<mapIterator, mapIterator> newPair;
-    std::stack<std::pair<mapIterator, mapIterator>> whereAmI;
-    newPair = std::make_pair(startRoot->nextChilds.begin(), startRoot->nextChilds.end());
-    whereAmI.push(newPair);
-
-    mapIterator mapItr = whereAmI.top().first;
-    AbstractNode2<T, E> *currentNode = mapItr.operator*().second;
-
-
+    if (startRoot->nextChilds.empty()) {
+        std::cout << "tree is empty" << std::endl;
+    }
+    (*startRoot).helpPrint(0);
 }
 
 

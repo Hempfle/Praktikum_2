@@ -11,8 +11,8 @@ public:
     bool isLeaf;
 
     AbstractNode2() = default;
-    AbstractNode2(bool isItLeaf) : isLeaf(isItLeaf) {
-    };
+    AbstractNode2(bool isItLeaf) : isLeaf(isItLeaf) {};
+    virtual ~AbstractNode2() = default;
 
 };
 
