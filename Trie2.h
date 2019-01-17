@@ -194,10 +194,12 @@ public:
          * There for easier end() in Trie.
          */
         void initializeStack() {
-            std::pair<mapIterator, mapIterator> newPair = std::make_pair((*root).nextChilds.begin(),
-                                                                         (*root).nextChilds.end());
-            current.push(newPair);
-            slideLeft();
+            if (!root->nextChilds.empty()) {
+                std::pair<mapIterator, mapIterator> newPair = std::make_pair((*root).nextChilds.begin(),
+                                                                             (*root).nextChilds.end());
+                current.push(newPair);
+                slideLeft();
+            }
         }
 
         iterator &operator=(const iterator &itr) {
@@ -259,17 +261,19 @@ public:
             std::pair<mapIterator, mapIterator> currentPair = current.top();
             AbstractNode2<T, E> *firstElement = currentPair.first.operator*().second;
             int stop;
-            while (!(firstElement)->isLeaf) {
-                InnerNode2 *currentElement = (InnerNode2 *) firstElement;
+            if (!current.empty()) {
+                while (!(firstElement)->isLeaf) {
+                    InnerNode2 *currentElement = (InnerNode2 *) firstElement;
 
-                mapIterator currentElItr = (*currentElement).nextChilds.begin();
-                if (currentElItr != (*currentElement).nextChilds.end()) {
-                    std::pair<mapIterator, mapIterator> newPair = std::make_pair(currentElItr,
-                                                                                 (*currentElement).nextChilds.end());
-                    current.push(newPair);
+                    mapIterator currentElItr = (*currentElement).nextChilds.begin();
+                    if (currentElItr != (*currentElement).nextChilds.end()) {
+                        std::pair<mapIterator, mapIterator> newPair = std::make_pair(currentElItr,
+                                                                                     (*currentElement).nextChilds.end());
+                        current.push(newPair);
+                    }
+                    currentPair = current.top();
+                    firstElement = currentPair.first.operator*().second;
                 }
-                currentPair = current.top();
-                firstElement = currentPair.first.operator*().second;
             }
         }
     };
@@ -278,13 +282,16 @@ public:
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     typedef PostorderTreeTraversal2 iterator;
-    typedef typename std::map<E, AbstractNode2<T, E> *>::iterator mapIterator;
 
     InnerNode2 *startRoot;
 
     Trie2() {
         startRoot = new InnerNode2(false);
     };
+
+    ~Trie2() {
+        delete startRoot;
+    }
 
     bool empty() const;
 
@@ -301,6 +308,7 @@ public:
     iterator end();
 
     void printTree();
+    void helpEraseOneBranch(iterator toDelete);
 
 };
 
@@ -485,48 +493,8 @@ bool Trie2<T, E>::empty() const {
  */
 template<class T, class E>
 void Trie2<T, E>::erase(const Trie2::key_type &value) {
-    typedef typename std::map<E, AbstractNode2<T, E> *>::iterator mapIterator;
-    Trie2<T, E>::PostorderTreeTraversal2 deleteIterator = Trie2<T, E>::find(value);
-    bool canDelete = true;
-    int indexToDelete = value.size();
-
-    if (deleteIterator != Trie2<T, E>::end()) {
-        deleteIterator.current.pop();
-        while (!deleteIterator.current.empty()) {
-            std::pair<mapIterator, mapIterator> currPair = deleteIterator.current.top();
-            mapIterator currMapItr = currPair.first;
-            InnerNode2 *currentNode = (InnerNode2 *) currMapItr.operator*().second;
-            bool tmpCanDelete = currentNode->nextChilds.size() < 2;
-
-            if (canDelete) {
-                if (indexToDelete >= value.size()) {
-                    //leaf needs to be deleted
-                    AbstractNode2<T, E> *toDelete = currentNode->nextChilds.at(TERMINAL_ZEICHEN);
-                    delete toDelete;
-                    currentNode->nextChilds.erase(TERMINAL_ZEICHEN);;
-                    --indexToDelete;
-                    deleteIterator.current.pop();
-                } else if (indexToDelete >= 0) {
-                    //rest needs to be deleted
-                    AbstractNode2<T, E> *toDelete = currentNode->nextChilds.at(value.at(indexToDelete));
-                    delete toDelete;
-                    currentNode->nextChilds.erase(value.at(indexToDelete));
-                    --indexToDelete;
-                    deleteIterator.current.pop();
-                }
-
-                canDelete = tmpCanDelete;
-            } else {
-                break;
-            }
-        }
-        //root is left
-        if (canDelete) {
-            AbstractNode2<T, E> *toDelete = startRoot->nextChilds.at(value.at(indexToDelete));
-            delete toDelete;
-            startRoot->nextChilds.erase(value.at(indexToDelete));
-        }
-    }
+    PostorderTreeTraversal2 deleteItr = find(value);
+    helpEraseOneBranch(deleteItr);
 }
 
 template<class T, class E>
@@ -537,5 +505,69 @@ void Trie2<T, E>::printTree() {
     (*startRoot).helpPrint(0);
 }
 
+/**
+ * Erases all elements of the trie. Leaving an empty root-map behind.
+ */
+template<class T, class E>
+void Trie2<T, E>::clear() {
+    PostorderTreeTraversal2 deleteItr = begin();
+    while (deleteItr != end()) {
+        helpEraseOneBranch(deleteItr);
+        deleteItr = begin();
+    }
+}
+
+/**
+ * Helper Method to delete the branch from iterator.
+ * If the iterator is the end Iterator, then nothing happens.
+ * @param toDelete iterator with the element to delete
+ */
+template<class T, class E>
+void Trie2<T, E>::helpEraseOneBranch(Trie2::PostorderTreeTraversal2 toDelete) {
+    typedef typename std::map<E, AbstractNode2<T, E> *>::iterator mapIterator;
+    Trie2<T, E>::PostorderTreeTraversal2 &deleteIterator = toDelete;
+    bool canDelete = true;
+    int counter = 0;
+    mapIterator saveItr;
+
+    if (deleteIterator != Trie2<T, E>::end()) {
+        deleteIterator.current.pop();
+        while (!deleteIterator.current.empty()) {
+            std::pair<mapIterator, mapIterator> currPair = deleteIterator.current.top();
+            mapIterator currMapItr = currPair.first;
+            InnerNode2 *currentNode = (InnerNode2 *) currMapItr.operator*().second;
+            bool tmpCanDelete = currentNode->nextChilds.size() < 2;
+
+            if (canDelete) {
+                if (counter == 0) {
+                    //leaf needs to be deleted
+                    AbstractNode2<T, E> *toDelete = currentNode->nextChilds.at(TERMINAL_ZEICHEN);
+                    delete toDelete;
+                    currentNode->nextChilds.erase(TERMINAL_ZEICHEN);;
+                    ++counter;
+                    saveItr = deleteIterator.current.top().first;
+                    deleteIterator.current.pop();
+                } else if (counter > 0) {
+                    //rest needs to be deleted
+                    AbstractNode2<T, E> *toDelete = saveItr.operator*().second;
+                    delete toDelete;
+                    currentNode->nextChilds.erase(saveItr.operator*().first);
+                    saveItr = deleteIterator.current.top().first;
+                    deleteIterator.current.pop();
+                }
+
+                canDelete = tmpCanDelete;
+            } else {
+                break;
+            }
+        }
+        //root is left
+        if (canDelete) {
+            AbstractNode2<T, E> *toDelete = saveItr.operator*().second;
+            delete toDelete;
+            startRoot->nextChilds.erase(saveItr.operator*().first);
+        }
+    }
+}
 
 #endif //PRAKTIKUM_2_TRIE2_H

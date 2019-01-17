@@ -1,5 +1,5 @@
 //
-// Created by Mel on 13.01.2019.
+//  Team: Melanie Famao, Christopher Weber
 //
 
 #include "Main.h"
@@ -159,6 +159,16 @@ bool testLowerBound() {
     return (*testIt01) == "bube" && (testIt02) == testTrie.end() && (*testIt03) == "soup" && (*testIt04) == "boy";
 }
 
+bool testClear() {
+    Trie2<std::string, char> testTrie = Trie2<std::string, char>();
+    testTrie.insert(std::make_pair("anker", "anker"));
+    testTrie.insert(std::make_pair("ball", "ball"));
+    testTrie.insert(std::make_pair("bube", "bube"));
+
+    testTrie.clear();
+    return testTrie.empty();
+}
+
 //------------ start here ----------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------
 using namespace std;
@@ -252,6 +262,11 @@ int main() {
         std::cout << "Test testLowerBound() passed\n";
     } else {
         std::cout << "Test testLowerBound0() failed.\n";
+    }
+    if (testClear()) {
+        std::cout << "Test testClear() passed\n";
+    } else {
+        std::cout << "Test testClear() failed.\n";
     }
 
 
