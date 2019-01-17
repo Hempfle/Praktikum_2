@@ -125,8 +125,51 @@ bool testErase() {
 
 //------------ start here ----------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------
+using namespace std;
 
 int main() {
+
+    Trie2<std::string, char> trie = Trie2<std::string, char>();
+
+    int count;
+    cout << "Wie viele Einträge willst du in den Trie hinzufuegen?" << endl;
+    cin >> count;
+
+    //fill in trie
+    for (int i = 0; i < count; ++i) {
+        cout << "Erstelle Eintrag Nummer " << i << endl;
+        cout << "Wie lautet der Key? " << i << endl;
+        std::basic_string<char> key;
+        cin >> key;
+
+        cout << "Wie lautet der Value? " << i << endl;
+        std::string value;
+        cin >> value;
+
+        std::pair<std::basic_string<char>, std::string> newPair = std::make_pair(key, value);
+        trie.insert(newPair);
+    }
+    cout << "Einträge wurden hinzugefuegt" << endl;
+
+    //search student
+    cout << "Suche einen Eintrag ueber seinen Key!" << endl;
+    std::basic_string<char> searchedKey;
+    cin >> searchedKey;
+    Trie2<std::string, char>::PostorderTreeTraversal2 searchIt = trie.find(searchedKey);
+    if (searchIt != trie.end()) {
+        cout << "Eintrag mit value: " <<  (*searchIt) << endl;
+    }
+
+    cout << "Möchten Sie Ihren Trie anzeigen lassen? (false/true)" << endl;
+    bool showTree;
+    cin >> showTree;
+
+    if (showTree) {
+        trie.printTree();
+    }
+
+    
+
 //TestMethods for Trie
     if (testTrieInsertAndFind()) {
         std::cout << "Test Insert() and Find() passed" << "\n";
